@@ -1,0 +1,63 @@
+[
+    {
+      "name": "container_${layer}_${stack_id}",
+      "image": "${app_image}",
+      "cpu": ${fargate_cpu
+      },
+      "memory": ${fargate_memory
+      },
+      "networkMode": "awsvpc",
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/container_${layer}_${stack_id}",
+          "awslogs-region": "${region}",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "portMappings": [
+        {
+          "containerPort": ${app_port
+          },
+          "hostPort": ${app_port
+          }
+        }
+      ],
+      "secrets": [
+        {
+          "name": "DB_HOST_READER",
+          "valueFrom": "arn:aws:ssm:us-west-1:412366347282:parameter/develop/rds-aurora-main/DB_HOST"
+        },
+        {
+          "name": "DB_PORT_READER",
+          "valueFrom": "arn:aws:ssm:us-west-1:412366347282:parameter/develop/rds-aurora-main/DB_PORT"
+        },
+        {
+          "name": "DB_DATABASE_READER",
+          "valueFrom": "arn:aws:ssm:us-west-1:412366347282:parameter/develop/rds-aurora-main/DB_DATABASE"
+        },
+        {
+          "name": "DB_USERNAME_READER",
+          "valueFrom": "arn:aws:ssm:us-west-1:412366347282:parameter/develop/rds-aurora-main/DB_USERNAME"
+        },
+        {
+          "name": "DB_PASSWORD_READER",
+          "valueFrom": "arn:aws:ssm:us-west-1:412366347282:parameter/develop/rds-aurora-main/DB_PASSWORD"
+        }
+      ],
+      "environment": [
+        {
+          "name": "environment",
+          "value": "${stack_id}"
+        },
+        {
+          "name": "mode",
+          "value": "${stack_id}"
+        },
+        {
+          "name": "DB_SYNCHRONIZE_READER",
+          "value": "false"
+        }
+      ]
+    }
+  ]

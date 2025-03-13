@@ -1,0 +1,123 @@
+[
+  {
+    "name": "container_${layer}_${stack_id}",
+    "image": "${app_image}",
+    "cpu": ${fargate_cpu
+    },
+    "memory": ${fargate_memory
+    },
+    "networkMode": "awsvpc",
+    "logConfiguration": {
+      "logDriver": "awslogs",
+      "options": {
+        "awslogs-group": "/ecs/container_${layer}_${stack_id}",
+        "awslogs-region": "${region}",
+        "awslogs-stream-prefix": "ecs"
+      }
+    },
+    "portMappings": [
+      {
+        "containerPort": ${app_port
+        },
+        "hostPort": ${app_port
+        }
+      }
+    ],
+    "secrets": [
+      {
+        "name": "APP_DEBUG",
+        "valueFrom": "arn:aws:ssm:us-west-1:015846616969:parameter/production/APP/APP_DEBUG"
+      },
+      {
+        "name": "DB_CONNECTION",
+        "valueFrom": "arn:aws:ssm:us-west-1:015846616969:parameter/production/RDS/DB_CONNECTION"
+      },
+      {
+        "name": "DB_HOST",
+        "valueFrom": "arn:aws:ssm:us-west-1:015846616969:parameter/production/back-advantage/DB_HOST"
+      },
+      {
+        "name": "DB_PORT",
+        "valueFrom": "arn:aws:ssm:us-west-1:015846616969:parameter/production/back-advantage/DB_PORT"
+      },
+      {
+        "name": "DB_DATABASE",
+        "valueFrom": "arn:aws:ssm:us-west-1:015846616969:parameter/production/back-advantage/DB_DATABASE"
+      },
+      {
+        "name": "DB_USERNAME",
+        "valueFrom": "arn:aws:ssm:us-west-1:015846616969:parameter/production/back-advantage/DB_USERNAME"
+      },
+      {
+        "name": "DB_PASSWORD",
+        "valueFrom": "arn:aws:ssm:us-west-1:015846616969:parameter/production/back-advantage/DB_PASSWORD"
+      },
+      {
+        "name": "MAIL_DRIVER",
+        "valueFrom": "arn:aws:ssm:us-west-1:015846616969:parameter/production/SES/MAIL_DRIVER"
+      },
+      {
+        "name": "MAIL_HOST",
+        "valueFrom": "arn:aws:ssm:us-west-1:015846616969:parameter/production/SES/MAIL_HOST"
+      },
+      {
+        "name": "MAIL_PORT",
+        "valueFrom": "arn:aws:ssm:us-west-1:015846616969:parameter/production/SES/MAIL_PORT"
+      },
+      {
+        "name": "MAIL_USERNAME",
+        "valueFrom": "arn:aws:ssm:us-west-1:015846616969:parameter/production/SES/MAIL_USERNAME"
+      },
+      {
+        "name": "MAIL_PASSWORD",
+        "valueFrom": "arn:aws:ssm:us-west-1:015846616969:parameter/production/SES/MAIL_PASSWORD"
+      },
+      {
+        "name": "MAIL_ENCRYPTION",
+        "valueFrom": "arn:aws:ssm:us-west-1:015846616969:parameter/production/SES/MAIL_ENCRYPTION"
+      },
+      {
+        "name": "MAIL_FROM_ADDRESS",
+        "valueFrom": "arn:aws:ssm:us-west-1:015846616969:parameter/production/SES/MAIL_FROM_ADDRESS"
+      },
+      {
+        "name": "MAIL_FROM_NAME",
+        "valueFrom": "arn:aws:ssm:us-west-1:015846616969:parameter/production/SES/MAIL_FROM_NAME"
+      },
+      {
+        "name": "G_SECRET_RECAPTCHA",
+        "valueFrom": "arn:aws:ssm:us-west-1:015846616969:parameter/production/GOOGLE/G_SECRET_RECAPTCHA"
+      },
+      {
+        "name": "USER_S3_ACCESS_KEY_ID",
+        "valueFrom": "arn:aws:ssm:us-west-1:015846616969:parameter/production/S3/USER_S3_ACCESS_KEY_ID"
+      },
+      {
+        "name": "USER_S3_ACCESS_KEY_SECRET",
+        "valueFrom": "arn:aws:ssm:us-west-1:015846616969:parameter/production/S3/USER_S3_ACCESS_KEY_SECRET"
+      },
+      {
+        "name": "USER_S3_REGION",
+        "valueFrom": "arn:aws:ssm:us-west-1:015846616969:parameter/production/S3/USER_S3_REGION"
+      },
+      {
+        "name": "USER_S3_BUCKET_NAME",
+        "valueFrom": "arn:aws:ssm:us-west-1:015846616969:parameter/production/S3/USER_S3_BUCKET_NAME"
+      },
+      {
+        "name": "USER_S3_CDN",
+        "valueFrom": "arn:aws:ssm:us-west-1:015846616969:parameter/production/S3/USER_S3_CDN"
+      }
+    ],
+    "environment": [
+      {
+        "name": "environment",
+        "value": "${stack_id}"
+      },
+      {
+        "name": "mode",
+        "value": "${stack_id}"
+      }
+    ]
+  }
+]
