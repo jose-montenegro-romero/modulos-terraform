@@ -169,13 +169,13 @@ resource "aws_lb_listener" "lb_listener_https" {
 
 locals {
   # Si hay certificate_arn, usamos el listener HTTPS
-  listener_arn = var.certificate_arn != null ? aws_lb_listener.lb_listener_https[0].arn : aws_lb_listener.lb_listener_http_fixed[0].arn
+  listener = var.certificate_arn != null ? aws_lb_listener.lb_listener_https[0] : aws_lb_listener.lb_listener_http_fixed[0]
 }
 
 resource "aws_lb_listener_rule" "static" {
   count = length(var.listener_rule_fargate)
 
-  listener_arn = local.listener_arn
+  listener_arn = local.listener.arn
   priority     = count.index + 1
 
   dynamic "action" {

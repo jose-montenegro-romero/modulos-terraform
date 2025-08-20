@@ -7,5 +7,5 @@ output "aws_ecr_repository" {
 }
 
 output "lb_listener_reference" {
-  value = aws_lb_listener.lb_listener
+  value = local.listener
 }
