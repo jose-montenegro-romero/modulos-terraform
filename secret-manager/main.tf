@@ -8,7 +8,7 @@ resource "random_password" "random_password" {
 }
 
 resource "aws_secretsmanager_secret" "secretsmanager_secret_1" {
-  name = var.name
+  name = "/${var.stack_id}/${var.layer}/${var.name}"
 
   tags = merge(var.tags, {
     Name        = "${var.name}-${var.stack_id}-${var.layer}"
