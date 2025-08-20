@@ -1,4 +1,4 @@
-resource "aws_acm_certificate" "hermes_certificate_cloudfront" {
+resource "aws_acm_certificate" "acm_certificate_request" {
 
   domain_name               = lookup(var.configuration_acm, "domain_name")
   subject_alternative_names = lookup(var.configuration_acm, "subject_alternative_names")
