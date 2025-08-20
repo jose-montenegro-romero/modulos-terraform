@@ -8,11 +8,6 @@ variable "stack_id" {
   type        = string
 }
 
-variable "region" {
-  description = "Region where the infra is displayed"
-  type        = string
-}
-
 variable "db_subnets_public" {
   description = "Array subnets to associate publics"
   type        = list(string)
