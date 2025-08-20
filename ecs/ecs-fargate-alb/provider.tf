@@ -1,7 +1,5 @@
-# Define el proveedor AWS
-provider "aws" {
-  region = var.region
-}
+# Region AWS
+data "aws_region" "current" {}
 
 # Data source para obtener la identidad del llamante
 data "aws_caller_identity" "current" {}
