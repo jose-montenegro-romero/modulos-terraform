@@ -109,32 +109,39 @@ resource "aws_lb_target_group" "app" {
   }
 }
 
-# Redirect all traffic from the ELB to the target group
-resource "aws_lb_listener" "lb_listener" {
-
+# Listener HTTP con redirect a HTTPS (solo si hay certificate_arn)
+resource "aws_lb_listener" "lb_listener_http_redirect" {
+  count             = var.certificate_arn != null ? 1 : 0
   load_balancer_arn = var.lb_id
   port              = "80"
   protocol          = "HTTP"
 
   default_action {
-    type = var.certificate_arn != null ? "redirect" : "fixed-response"
-
-    dynamic "redirect" {
-      for_each = var.certificate_arn != null ? [1] : []
-      content {
-        port        = "443"
-        protocol    = "HTTPS"
-        status_code = "HTTP_301"
-      }
+    type = "redirect"
+    redirect {
+      host        = "#{host}"
+      path        = "/#{path}"
+      query       = "#{query}"
+      port        = "443"
+      protocol    = "HTTPS"
+      status_code = "HTTP_301"
     }
+  }
+}
 
-    dynamic "fixed_response" {
-      for_each = var.certificate_arn == null ? [1] : []
-      content {
-        content_type = "text/plain"
-        message_body = "Not work"
-        status_code  = "503"
-      }
+# Listener HTTP que devuelve 503 (solo si NO hay certificate_arn)
+resource "aws_lb_listener" "lb_listener_http_fixed" {
+  count             = var.certificate_arn == null ? 1 : 0
+  load_balancer_arn = var.lb_id
+  port              = "80"
+  protocol          = "HTTP"
+
+  default_action {
+    type = "fixed-response"
+    fixed_response {
+      content_type = "text/plain"
+      message_body = "Not work"
+      status_code  = "503"
     }
   }
 }
@@ -160,10 +167,15 @@ resource "aws_lb_listener" "lb_listener_https" {
 
 }
 
+locals {
+  # Si hay certificate_arn, usamos el listener HTTPS
+  listener_arn = var.certificate_arn != null ? aws_lb_listener.lb_listener_https[0].arn : aws_lb_listener.lb_listener_http_fixed[0].arn
+}
+
 resource "aws_lb_listener_rule" "static" {
   count = length(var.listener_rule_fargate)
 
-  listener_arn = aws_lb_listener.lb_listener.arn
+  listener_arn = local.listener_arn
   priority     = count.index + 1
 
   dynamic "action" {
