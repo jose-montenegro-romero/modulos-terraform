@@ -117,6 +117,39 @@ resource "aws_lb_listener" "lb_listener" {
   protocol          = "HTTP"
 
   default_action {
+    type = var.certificate_arn != null ? "redirect" : "fixed-response"
+
+    dynamic "redirect" {
+      for_each = var.certificate_arn != null ? [1] : []
+      content {
+        port        = "443"
+        protocol    = "HTTPS"
+        status_code = "HTTP_301"
+      }
+    }
+
+    dynamic "fixed_response" {
+      for_each = var.certificate_arn == null ? [1] : []
+      content {
+        content_type = "text/plain"
+        message_body = "Not work"
+        status_code  = "503"
+      }
+    }
+  }
+}
+
+resource "aws_lb_listener" "lb_listener_https" {
+
+  count = var.certificate_arn != null ? 1 : 0
+
+  load_balancer_arn = var.lb_id
+  port              = "443"
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-2016-08"
+  certificate_arn   = var.certificate_arn
+
+  default_action {
     type = "fixed-response"
     fixed_response {
       content_type = "text/plain"
@@ -124,6 +157,7 @@ resource "aws_lb_listener" "lb_listener" {
       status_code  = "503"
     }
   }
+
 }
 
 resource "aws_lb_listener_rule" "static" {
