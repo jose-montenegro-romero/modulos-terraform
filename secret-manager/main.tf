@@ -2,9 +2,9 @@ resource "random_password" "random_password" {
 
   count = var.random == true ? 1 : 0
 
-  length           = 16
+  length           = 20
   special          = true
-  override_special = "#%&*()-_=+[]{}<>:?"
+  override_special = "!$^&*()-_=+[]{}<>"
 }
 
 resource "aws_secretsmanager_secret" "secretsmanager_secret_1" {
