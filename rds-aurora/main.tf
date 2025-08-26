@@ -181,7 +181,7 @@ data "aws_iam_policy_document" "iam_policy_document" {
 }
 
 resource "aws_iam_role" "iam_role" {
-  name_prefix        = replace("role-${lookup(var.configuration_rds, "rds_name")}-${var.layer}-${var.stack_id}", "_", "-")
+  name_prefix        = replace(substr(replace("role-${lookup(var.configuration_rds, "rds_name")}-${var.layer}-${var.stack_id}", "_", "-"), 0, 38), "/-$/", "")
   assume_role_policy = data.aws_iam_policy_document.iam_policy_document.json
 }
 
