@@ -83,13 +83,10 @@ resource "aws_internet_gateway" "IG" {
 
 # Create a NAT gateway with an Elastic IP for each private subnet to get internet connectivity
 resource "aws_eip" "elastic_ip" {
-
-  count = local.number_of_resources
-
   domain = "vpc"
 
   tags = merge(var.tags, {
-    Name        = "eip-nat-${var.layer}-${var.stack_id}-${count.index + 1}"
+    Name        = "eip-nat-${var.layer}-${var.stack_id}"
     Environment = var.stack_id
     Source      = "Terraform"
   })
@@ -97,13 +94,11 @@ resource "aws_eip" "elastic_ip" {
 
 resource "aws_nat_gateway" "nat_gw" {
 
-  count = local.number_of_resources
-
-  subnet_id     = element(aws_subnet.public_subnets.*.id, count.index)
-  allocation_id = element(aws_eip.elastic_ip.*.id, count.index)
+  subnet_id     = element(aws_subnet.public_subnets.*.id, 0)
+  allocation_id = aws_eip.elastic_ip.id
 
   tags = merge(var.tags, {
-    Name        = "nat-gateway-${var.layer}-${var.stack_id}-${count.index + 1}"
+    Name        = "nat-gateway-${var.layer}-${var.stack_id}"
     Environment = var.stack_id
     Source      = "Terraform"
   })
@@ -134,14 +129,14 @@ resource "aws_route_table" "private_routing_table" {
   vpc_id = aws_vpc.vpc.id
   route {
     cidr_block     = "0.0.0.0/0"
-    nat_gateway_id = element(aws_nat_gateway.nat_gw.*.id, count.index)
+    nat_gateway_id = aws_nat_gateway.nat_gw.id
   }
 
   dynamic "route" {
     for_each = var.routes_private
     content {
       cidr_block         = route.value.cidr_block
-      nat_gateway_id     = route.value.nat_gateway == false ? null : element(aws_nat_gateway.nat_gw.*.id, count.index)
+      nat_gateway_id     = route.value.nat_gateway == false ? null : aws_nat_gateway.nat_gw.id
       transit_gateway_id = route.value.transit_gateway == false ? null : var.transit_gateway_id
     }
   }
