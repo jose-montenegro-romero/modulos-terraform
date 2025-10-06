@@ -287,6 +287,7 @@ resource "aws_ecs_service" "main" {
   task_definition = aws_ecs_task_definition.app[each.key].arn
   desired_count   = lookup(each.value, "min_capacity_fargate", 1)
   launch_type     = "FARGATE"
+  enable_execute_command = true
 
   network_configuration {
     security_groups  = [module.sg_task_fargate.sg_reference.id]
