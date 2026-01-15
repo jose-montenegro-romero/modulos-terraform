@@ -8,11 +8,11 @@ resource "random_password" "random_password" {
 }
 
 resource "aws_secretsmanager_secret" "secretsmanager_secret_1" {
-  name = "${var.stack_id}/${var.layer}/${var.name}"
+  name = "${var.environment}/${var.project}/${var.name}"
 
   tags = merge(var.tags, {
-    Name        = "${var.name}-${var.stack_id}-${var.layer}"
-    Environment = var.stack_id
+    Name        = "${var.name}-${var.environment}-${var.project}"
+    Environment = var.environment
     Source      = "Terraform"
   })
 }

@@ -11,8 +11,8 @@ locals {
 module "sg_task_fargate" {
   source = "../../sg"
 
-  layer    = var.layer
-  stack_id = var.stack_id
+  project    = var.project
+  environment = var.environment
   // configuration sg
   name    = "task-fargate"
   vpc_id  = var.vpc_id
@@ -45,7 +45,7 @@ data "aws_iam_policy_document" "ecs_task_execution_role" {
 
 # ECS task execution role
 resource "aws_iam_role" "ecs_task_execution_role" {
-  name               = "myEcsTaskExecutionRole_${var.layer}_${var.stack_id}"
+  name               = "myEcsTaskExecutionRole_${var.project}_${var.environment}"
   assume_role_policy = data.aws_iam_policy_document.ecs_task_execution_role.json
 }
 
@@ -75,8 +75,8 @@ module "ecr" {
 
   for_each = local.ecs_fargate_map
 
-  layer    = var.layer
-  stack_id = var.stack_id
+  project    = var.project
+  environment = var.environment
   //Configuration ECR
   ecr_repository = {
     name                 = each.key
@@ -90,7 +90,7 @@ resource "aws_lb_target_group" "app" {
   for_each = local.ecs_fargate_map
 
   # Usamos each.key para el nombre
-  name = replace(substr(replace("tg-${each.key}-${var.stack_id}-${var.layer}", "_", "-"), 0, 31), "/-$/", "")
+  name = replace(substr(replace("tg-${each.key}-${var.environment}-${var.project}", "_", "-"), 0, 31), "/-$/", "")
   # Usamos each.value para acceder al resto de los datos
   port        = each.value.port
   protocol    = "HTTP"
@@ -225,7 +225,7 @@ resource "aws_ecs_task_definition" "app" {
   for_each = local.ecs_fargate_map
 
   # each.key es el ecr_repository (la clave del mapa)
-  family                   = replace("task-${each.key}-${var.stack_id}", "_", "-")
+  family                   = replace("task-${each.key}-${var.environment}", "_", "-")
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
   task_role_arn            = aws_iam_role.ecs_task_execution_role.arn
   network_mode             = "awsvpc"
@@ -237,11 +237,11 @@ resource "aws_ecs_task_definition" "app" {
   container_definitions = templatefile(each.value.templatefile,
     merge(lookup(each.value, "extra_environments", {}),
       {
-        stack_id       = var.stack_id
+        environment       = var.environment
         region         = var.region
-        name           = "container-${each.key}-${var.stack_id}"
-        name_logsgroup = "/ecs/container_${each.key}_${var.stack_id}"
-        layer          = each.key # Usamos each.key para el layer (ecr_repository)
+        name           = "container-${each.key}-${var.environment}"
+        name_logsgroup = "/ecs/container_${each.key}_${var.environment}"
+        project          = each.key # Usamos each.key para el project (ecr_repository)
         # Referencia al módulo ECR por su llave
         app_image      = module.ecr[each.key].ecr_reference.repository_url
         fargate_cpu    = each.value.cpu
@@ -280,7 +280,7 @@ resource "aws_ecs_task_definition" "app" {
 resource "aws_ecs_service" "main" {
   for_each = local.ecs_fargate_map
 
-  name                          = replace("service-${each.key}-${var.stack_id}", "_", "-")
+  name                          = replace("service-${each.key}-${var.environment}", "_", "-")
   cluster                       = var.ecs_cluster_reference.id
   availability_zone_rebalancing = "ENABLED"
   # Referencia al task_definition por su llave
@@ -298,7 +298,7 @@ resource "aws_ecs_service" "main" {
   load_balancer {
     # Referencia al target_group por su llave
     target_group_arn = aws_lb_target_group.app[each.key].id
-    container_name   = "container-${each.key}-${var.stack_id}"
+    container_name   = "container-${each.key}-${var.environment}"
     container_port   = each.value.port
   }
 
@@ -321,7 +321,7 @@ resource "aws_appautoscaling_target" "target" {
 resource "aws_appautoscaling_policy" "up_cpu" {
   for_each = local.ecs_fargate_map
 
-  name              = "scale_up_cpu_${each.key}_${var.layer}_${var.stack_id}"
+  name              = "scale_up_cpu_${each.key}_${var.project}_${var.environment}"
   service_namespace = "ecs"
   # Referencia al servicio ECS por su llave
   resource_id        = "service/${var.ecs_cluster_reference.name}/${aws_ecs_service.main[each.key].name}"
@@ -346,7 +346,7 @@ resource "aws_appautoscaling_policy" "up_cpu" {
 resource "aws_appautoscaling_policy" "down_cpu" {
   for_each = local.ecs_fargate_map
 
-  name              = "scale_down_cpu_${each.key}_${var.layer}_${var.stack_id}"
+  name              = "scale_down_cpu_${each.key}_${var.project}_${var.environment}"
   service_namespace = "ecs"
   # Referencia al servicio ECS por su llave
   resource_id        = "service/${var.ecs_cluster_reference.name}/${aws_ecs_service.main[each.key].name}"
@@ -371,7 +371,7 @@ resource "aws_appautoscaling_policy" "down_cpu" {
 resource "aws_appautoscaling_policy" "up_memory" {
   for_each = local.ecs_fargate_map
 
-  name              = "scale_up_memory_${each.key}_${var.layer}_${var.stack_id}"
+  name              = "scale_up_memory_${each.key}_${var.project}_${var.environment}"
   service_namespace = "ecs"
   # Referencia al servicio ECS por su llave
   resource_id        = "service/${var.ecs_cluster_reference.name}/${aws_ecs_service.main[each.key].name}"
@@ -396,7 +396,7 @@ resource "aws_appautoscaling_policy" "up_memory" {
 resource "aws_appautoscaling_policy" "down_memory" {
   for_each = local.ecs_fargate_map
 
-  name              = "scale_down_memory_${each.key}_${var.layer}_${var.stack_id}"
+  name              = "scale_down_memory_${each.key}_${var.project}_${var.environment}"
   service_namespace = "ecs"
   # Referencia al servicio ECS por su llave
   resource_id        = "service/${var.ecs_cluster_reference.name}/${aws_ecs_service.main[each.key].name}"
@@ -421,7 +421,7 @@ resource "aws_appautoscaling_policy" "down_memory" {
 resource "aws_cloudwatch_metric_alarm" "service_cpu_high" {
   for_each = local.ecs_fargate_map
 
-  alarm_name          = "cpu_utilization_high_${each.key}_${var.layer}_${var.stack_id}"
+  alarm_name          = "cpu_utilization_high_${each.key}_${var.project}_${var.environment}"
   comparison_operator = "GreaterThanOrEqualToThreshold"
   evaluation_periods  = "1"
   metric_name         = "CPUUtilization"
@@ -444,7 +444,7 @@ resource "aws_cloudwatch_metric_alarm" "service_cpu_high" {
 resource "aws_cloudwatch_metric_alarm" "service_cpu_low" {
   for_each = local.ecs_fargate_map
 
-  alarm_name          = "cpu_utilization_low_${each.key}_${var.layer}_${var.stack_id}"
+  alarm_name          = "cpu_utilization_low_${each.key}_${var.project}_${var.environment}"
   comparison_operator = "LessThanOrEqualToThreshold"
   evaluation_periods  = "1"
   metric_name         = "CPUUtilization"
@@ -467,7 +467,7 @@ resource "aws_cloudwatch_metric_alarm" "service_cpu_low" {
 resource "aws_cloudwatch_metric_alarm" "service_memory_high" {
   for_each = local.ecs_fargate_map
 
-  alarm_name          = "memory_utilization_high_${each.key}_${var.layer}_${var.stack_id}"
+  alarm_name          = "memory_utilization_high_${each.key}_${var.project}_${var.environment}"
   comparison_operator = "GreaterThanOrEqualToThreshold"
   evaluation_periods  = "1"
   metric_name         = "MemoryUtilization"
@@ -490,7 +490,7 @@ resource "aws_cloudwatch_metric_alarm" "service_memory_high" {
 resource "aws_cloudwatch_metric_alarm" "service_memory_low" {
   for_each = local.ecs_fargate_map
 
-  alarm_name          = "memory_utilization_low_${each.key}_${var.layer}_${var.stack_id}"
+  alarm_name          = "memory_utilization_low_${each.key}_${var.project}_${var.environment}"
   comparison_operator = "LessThanOrEqualToThreshold"
   evaluation_periods  = "1"
   metric_name         = "MemoryUtilization"
@@ -514,11 +514,11 @@ resource "aws_cloudwatch_metric_alarm" "service_memory_low" {
 resource "aws_cloudwatch_log_group" "cloudwatch_log_group" {
   for_each = local.ecs_fargate_map
 
-  name              = "/ecs/container_${each.key}_${var.stack_id}"
+  name              = "/ecs/container_${each.key}_${var.environment}"
   retention_in_days = var.cloudwatch_log_retention
 
   tags = {
-    Name   = "cloudwatch_log_${each.key}_${var.stack_id}"
+    Name   = "cloudwatch_log_${each.key}_${var.environment}"
     Source = "Terraform"
   }
 }
@@ -526,7 +526,7 @@ resource "aws_cloudwatch_log_group" "cloudwatch_log_group" {
 resource "aws_cloudwatch_log_stream" "cloudwatch_log_stream" {
   for_each = local.ecs_fargate_map
 
-  name = "my_log_stream_${each.key}_${var.stack_id}"
+  name = "my_log_stream_${each.key}_${var.environment}"
   # Referencia al log group por su llave
   log_group_name = aws_cloudwatch_log_group.cloudwatch_log_group[each.key].name
 }

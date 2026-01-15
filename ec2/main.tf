@@ -2,8 +2,8 @@ module "sg" {
   source = "../sg"
 
 
-  layer    = var.layer
-  stack_id = var.stack_id
+  project    = var.project
+  environment = var.environment
   // configuration sg
   name    = "ec2-${var.name}"
   vpc_id  = var.vpc
@@ -15,7 +15,7 @@ module "sg" {
 
 resource "aws_key_pair" "key_pair" {
 
-  key_name   = "key-ec2-${var.name}-${var.layer}-${var.stack_id}"
+  key_name   = "key-ec2-${var.name}-${var.project}-${var.environment}"
   public_key = file(var.public_key)
 }
 
@@ -49,7 +49,7 @@ data "aws_iam_policy_document" "logs_execution_role" {
 
 # ECS intance execution role
 resource "aws_iam_role" "logs_iam_execution_role" {
-  name               = "iam_role_${var.name}_${var.layer}_${var.stack_id}"
+  name               = "iam_role_${var.name}_${var.project}_${var.environment}"
   assume_role_policy = data.aws_iam_policy_document.logs_execution_role.json
 }
 
@@ -74,7 +74,7 @@ resource "aws_iam_role_policy_attachment" "s3_policy_attachment" {
 }
 
 resource "aws_iam_instance_profile" "logs_profile" {
-  name = "profile_${var.name}_${var.layer}_${var.stack_id}"
+  name = "profile_${var.name}_${var.project}_${var.environment}"
   role = aws_iam_role.logs_iam_execution_role.name
 }
 
@@ -108,8 +108,8 @@ resource "aws_instance" "instance" {
   }
 
   tags = merge(var.tags, {
-    Name        = "ec2-${var.name}-${var.layer}-${var.stack_id}"
-    Environment = var.stack_id
+    Name        = "ec2-${var.name}-${var.project}-${var.environment}"
+    Environment = var.environment
     Source      = "Terraform"
   })
 }
@@ -121,8 +121,8 @@ resource "aws_eip" "elastic_ip" {
   instance = aws_instance.instance.id
 
   tags = merge(var.tags, {
-    Name        = "elastic-ip-${var.name}-${var.layer}-${var.stack_id}"
-    Environment = var.stack_id
+    Name        = "elastic-ip-${var.name}-${var.project}-${var.environment}"
+    Environment = var.environment
     Source      = "Terraform"
   })
 }

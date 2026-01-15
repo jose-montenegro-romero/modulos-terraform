@@ -21,8 +21,8 @@ resource "aws_route53_health_check" "route53_health_check" {
   routing_control_arn             = lookup(var.configuration_route53_healthcheck, "routing_control_arn", null)
 
   tags = {
-    Name        = "${lookup(var.configuration_route53_healthcheck, "name")} ${var.layer} ${var.stack_id}"
-    environment = var.stack_id
+    Name        = "${lookup(var.configuration_route53_healthcheck, "name")} ${var.project} ${var.environment}"
+    environment = var.environment
     source      = "Terraform"
   }
 }
@@ -31,14 +31,14 @@ resource "aws_sns_topic" "sns_topic" {
 
   count = lookup(var.configuration_route53_healthcheck, "aws_sns_topic_subscription_endpoint", null) != null ? 1 : 0
   
-  name     = replace("sns_topic_${lookup(var.configuration_route53_healthcheck, "name")}_${var.layer}_${var.stack_id}", " ", "_")
+  name     = replace("sns_topic_${lookup(var.configuration_route53_healthcheck, "name")}_${var.project}_${var.environment}", " ", "_")
 
   #   provisioner "local-exec" {
   #     command = "aws sns subscribe --topic-arn ${self.arn} --region ${aws.virginia} --protocol email --notification-endpoint ${var.sns-subscribe-list}"
   #   }
 
   tags = {
-    environment = var.stack_id
+    environment = var.environment
     source      = "Terraform"
   }
 }
@@ -56,7 +56,7 @@ resource "aws_cloudwatch_metric_alarm" "cloudwatch_metric_alarm" {
 
   count = lookup(var.configuration_route53_healthcheck, "aws_sns_topic_subscription_endpoint", null) != null ? 1 : 0
 
-  alarm_name          = replace("cloudwatch_metric_alarm_${lookup(var.configuration_route53_healthcheck, "name")}_${var.layer}_${var.stack_id}", " ", "_")
+  alarm_name          = replace("cloudwatch_metric_alarm_${lookup(var.configuration_route53_healthcheck, "name")}_${var.project}_${var.environment}", " ", "_")
   comparison_operator = "LessThanThreshold"
   evaluation_periods  = "1"
   metric_name         = "HealthCheckStatus"
@@ -69,11 +69,11 @@ resource "aws_cloudwatch_metric_alarm" "cloudwatch_metric_alarm" {
     HealthCheckId = aws_route53_health_check.route53_health_check.id
   }
 
-  alarm_description = "This metric monitors status of the health check ${lookup(var.configuration_route53_healthcheck, "name")} ${var.layer} ${var.stack_id}"
+  alarm_description = "This metric monitors status of the health check ${lookup(var.configuration_route53_healthcheck, "name")} ${var.project} ${var.environment}"
   alarm_actions     = [aws_sns_topic.sns_topic[0].arn]
 
   tags = {
-    environment = var.stack_id
+    environment = var.environment
     source      = "Terraform"
   }
 }

@@ -1,6 +1,6 @@
 resource "aws_cloudfront_distribution" "cloudfront_distribution" {
 
-  comment             = replace("${lookup(var.configuration_cloudfront, "cloudfront_name")} ${var.layer} ${var.stack_id}", "/[-_]/", " ")
+  comment             = replace("${lookup(var.configuration_cloudfront, "cloudfront_name")} ${var.project} ${var.environment}", "/[-_]/", " ")
   enabled             = lookup(var.configuration_cloudfront, "enabled", true)
   is_ipv6_enabled     = lookup(var.configuration_cloudfront, "is_ipv6_enabled", false)
   default_root_object = lookup(var.configuration_cloudfront, "default_root_object", null)
@@ -138,8 +138,8 @@ resource "aws_cloudfront_distribution" "cloudfront_distribution" {
   }
 
   tags = merge(var.tags, {
-    Name        = "${lookup(var.configuration_cloudfront, "cloudfront_name", )}_${var.layer}_${var.stack_id}"
-    Environment = var.stack_id
+    Name        = "${lookup(var.configuration_cloudfront, "cloudfront_name", )}_${var.project}_${var.environment}"
+    Environment = var.environment
     Source      = "Terraform"
   })
 }

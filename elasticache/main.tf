@@ -3,8 +3,8 @@ module "sg" {
   source = "../sg"
 
 
-  layer    = var.layer
-  stack_id = var.stack_id
+  project    = var.project
+  environment = var.environment
   // configuration sg
   name    = "elasticache-${lookup(var.configuration_elasticache, "name")}"
   vpc_id  = var.vpc_id
@@ -15,8 +15,8 @@ module "sg" {
 }
 
 resource "aws_elasticache_serverless_cache" "elasticache_serverless_cache" {
-  name        = replace("elasticache-${lookup(var.configuration_elasticache, "name")}-${var.layer}-${var.stack_id}", "_", "-")
-  description = replace("Elasticache ${lookup(var.configuration_elasticache, "name")} ${var.layer} ${var.stack_id}", "/[-_]/", " ")
+  name        = replace("elasticache-${lookup(var.configuration_elasticache, "name")}-${var.project}-${var.environment}", "_", "-")
+  description = replace("Elasticache ${lookup(var.configuration_elasticache, "name")} ${var.project} ${var.environment}", "/[-_]/", " ")
   engine      = lookup(var.configuration_elasticache, "engine")
 
   daily_snapshot_time      = lookup(var.configuration_elasticache, "daily_snapshot_time")
@@ -40,8 +40,8 @@ resource "aws_elasticache_serverless_cache" "elasticache_serverless_cache" {
   }
 
   tags = merge(var.tags, {
-    Name        = replace("elasticache-${lookup(var.configuration_elasticache, "name")}-${var.layer}-${var.stack_id}", "_", "-")
-    Environment = var.stack_id
+    Name        = replace("elasticache-${lookup(var.configuration_elasticache, "name")}-${var.project}-${var.environment}", "_", "-")
+    Environment = var.environment
     Source      = "Terraform"
   })
 }

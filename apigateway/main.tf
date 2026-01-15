@@ -1,6 +1,6 @@
 resource "aws_api_gateway_rest_api" "api_gateway_rest_api" {
-  name        = replace("apigateway-${lookup(var.configuration_apigateway, "name")}-${var.layer}-${var.stack_id}", "_", "-")
-  description = replace("Api gateway ${lookup(var.configuration_apigateway, "name")} ${var.layer} ${var.stack_id}", "/[-_]/", " ")
+  name        = replace("apigateway-${lookup(var.configuration_apigateway, "name")}-${var.project}-${var.environment}", "_", "-")
+  description = replace("Api gateway ${lookup(var.configuration_apigateway, "name")} ${var.project} ${var.environment}", "/[-_]/", " ")
 
   binary_media_types           = var.configuration_apigateway.binary_media_types
   body                         = lookup(var.configuration_apigateway, "body", null)
@@ -19,8 +19,8 @@ resource "aws_api_gateway_rest_api" "api_gateway_rest_api" {
   }
 
   tags = merge(var.tags, {
-    Name        = "apigateway-${lookup(var.configuration_apigateway, "name")}-${var.layer}-${var.stack_id}"
-    Environment = var.stack_id
+    Name        = "apigateway-${lookup(var.configuration_apigateway, "name")}-${var.project}-${var.environment}"
+    Environment = var.environment
     Source      = "Terraform"
   })
 
@@ -48,12 +48,12 @@ resource "aws_api_gateway_vpc_link" "api_gateway_vpc_link" {
 
   count = var.configuration_apigateway.enable_vpc_link ? 1 : 0
 
-  name        = replace("vpclink-${lookup(var.configuration_apigateway, "name")}-${var.layer}-${var.stack_id}", "_", "-")
+  name        = replace("vpclink-${lookup(var.configuration_apigateway, "name")}-${var.project}-${var.environment}", "_", "-")
   target_arns = [var.configuration_apigateway.vpc_link_nlb_arn]
 
   tags = merge(var.tags, {
-    Name        = "vpclink-${lookup(var.configuration_apigateway, "name")}-${var.layer}-${var.stack_id}"
-    Environment = var.stack_id
+    Name        = "vpclink-${lookup(var.configuration_apigateway, "name")}-${var.project}-${var.environment}"
+    Environment = var.environment
     Source      = "Terraform"
   })
 }
@@ -65,19 +65,19 @@ resource "aws_api_gateway_vpc_link" "api_gateway_vpc_link" {
 resource "aws_api_gateway_api_key" "api_gateway_api_key" {
   count = var.api_key_config.enabled ? 1 : 0
 
-  name        = replace("api-key-${lookup(var.configuration_apigateway, "name")}-${var.layer}-${var.stack_id}", "_", "-")
-  description = replace("Api Key ${lookup(var.configuration_apigateway, "name")} ${var.layer} ${var.stack_id}", "/[-_]/", " ")
+  name        = replace("api-key-${lookup(var.configuration_apigateway, "name")}-${var.project}-${var.environment}", "_", "-")
+  description = replace("Api Key ${lookup(var.configuration_apigateway, "name")} ${var.project} ${var.environment}", "/[-_]/", " ")
   enabled     = true
 }
 
 resource "aws_api_gateway_usage_plan" "api_gateway_usage_plan" {
   count = var.api_key_config.enabled ? 1 : 0
 
-  name = replace("usage-plan-key-${lookup(var.configuration_apigateway, "name")}-${var.layer}-${var.stack_id}", "_", "-")
+  name = replace("usage-plan-key-${lookup(var.configuration_apigateway, "name")}-${var.project}-${var.environment}", "_", "-")
 
   api_stages {
     api_id = aws_api_gateway_rest_api.api_gateway_rest_api.id
-    stage  = var.stack_id
+    stage  = var.environment
   }
 
   throttle_settings {

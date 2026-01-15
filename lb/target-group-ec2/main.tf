@@ -1,6 +1,6 @@
 
 resource "aws_lb_target_group" "app" {
-  name        = replace("tg_${lookup(var.lb_definition, "name")}_${var.layer}_${var.stack_id}", "_", "-")
+  name        = replace("tg_${lookup(var.lb_definition, "name")}_${var.project}_${var.environment}", "_", "-")
   port        = 80
   protocol    = "HTTP"
   vpc_id      = var.vpc_id

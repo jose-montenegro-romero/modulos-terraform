@@ -9,6 +9,6 @@ resource "aws_api_gateway_domain_name" "api_gateway_domain_name" {
 
 resource "aws_api_gateway_base_path_mapping" "custom_domain_mapping" {
   api_id      = lookup(var.configuration_custom_domain, "api_id")
-  stage_name  = var.stack_id
+  stage_name  = var.environment
   domain_name = aws_api_gateway_domain_name.api_gateway_domain_name.domain_name
 }

@@ -3,8 +3,8 @@
 #--------------------------------------------------------------
 resource "aws_wafv2_web_acl" "wafv2_web_acl" {
 
-  name        = replace("${var.name}-${var.layer}-${var.stack_id}", "_", "-")
-  description = replace("${var.name} ${var.layer} ${var.stack_id}", "/[-_]/", " ")
+  name        = replace("${var.name}-${var.project}-${var.environment}", "_", "-")
+  description = replace("${var.name} ${var.project} ${var.environment}", "/[-_]/", " ")
   scope       = var.scope
 
   dynamic "custom_response_body" {

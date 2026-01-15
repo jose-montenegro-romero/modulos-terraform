@@ -1,5 +1,5 @@
 resource "aws_security_group" "security_group" {
-  name        = "efs_sg_${lookup(var.configuration_efs, "creation_token")}_${var.layer}_${var.stack_id}"
+  name        = "efs_sg_${lookup(var.configuration_efs, "creation_token")}_${var.project}_${var.environment}"
   vpc_id      = var.vpc
   description = "Enable access to EFS ${lookup(var.configuration_efs, "creation_token")}"
 
@@ -18,8 +18,8 @@ resource "aws_security_group" "security_group" {
   }
 
   tags = {
-    Name        = "efs_sg_${lookup(var.configuration_efs, "creation_token")}_${var.layer}_${var.stack_id}"
-    Environment = var.stack_id
+    Name        = "efs_sg_${lookup(var.configuration_efs, "creation_token")}_${var.project}_${var.environment}"
+    Environment = var.environment
     Source      = "Terraform"
   }
 }
@@ -27,7 +27,7 @@ resource "aws_security_group" "security_group" {
 resource "aws_efs_file_system" "efs_file_system" {
 
   availability_zone_name = lookup(var.configuration_efs, "availability_zone_name", null)
-  creation_token         = "${lookup(var.configuration_efs, "creation_token")}_${var.layer}_${var.stack_id}"
+  creation_token         = "${lookup(var.configuration_efs, "creation_token")}_${var.project}_${var.environment}"
   encrypted              = lookup(var.configuration_efs, "encrypted", false)
   kms_key_id             = lookup(var.configuration_efs, "kms_key_id", null)
 
@@ -44,8 +44,8 @@ resource "aws_efs_file_system" "efs_file_system" {
   throughput_mode                 = lookup(var.configuration_efs, "throughput_mode", null)
 
   tags = {
-    Name        = "${lookup(var.configuration_efs, "creation_token")}_${var.layer}_${var.stack_id}"
-    Environment = var.stack_id
+    Name        = "${lookup(var.configuration_efs, "creation_token")}_${var.project}_${var.environment}"
+    Environment = var.environment
     Source      = "Terraform"
   }
 }
@@ -97,8 +97,8 @@ resource "aws_efs_access_point" "efs_access_point" {
   }
 
   tags = {
-    Name        = "efs_access_point_${lookup(var.configuration_efs, "creation_token")}_${var.layer}_${var.stack_id}"
-    Environment = var.stack_id
+    Name        = "efs_access_point_${lookup(var.configuration_efs, "creation_token")}_${var.project}_${var.environment}"
+    Environment = var.environment
     Source      = "Terraform"
   }
 }

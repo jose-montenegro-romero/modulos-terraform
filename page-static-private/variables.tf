@@ -1,9 +1,9 @@
-variable "layer" {
+variable "project" {
   description = "A unique identifier for the deployment. Used as a prefix for all the Openstack resources."
   type        = string
 }
 
-variable "stack_id" {
+variable "environment" {
   description = "A unique identifier for the deployment. Used as a prefix for all the Openstack resources."
   type        = string
 }

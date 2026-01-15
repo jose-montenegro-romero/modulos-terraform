@@ -1,5 +1,5 @@
 resource "aws_cloudfront_origin_access_identity" "cloudfront_origin_access_identity" {
-  comment = "${lookup(var.configuration_cloudfront_oai, "name")}_${var.layer}_${var.stack_id}"
+  comment = "${lookup(var.configuration_cloudfront_oai, "name")}_${var.project}_${var.environment}"
 }
 
 data "aws_iam_policy_document" "s3_policy" {

@@ -3,10 +3,10 @@ module "sg_lb" {
   source = "../sg"
 
 
-  layer    = var.layer
-  stack_id = var.stack_id
+  project    = var.project
+  environment = var.environment
   // configuration sg
-  name   = replace(substr(replace("lb-${lookup(var.configuration_pagestatic_private, "name")}-${var.stack_id}-${var.layer}", "_", "-"), 0, 31), "/-$/", "")
+  name   = replace(substr(replace("lb-${lookup(var.configuration_pagestatic_private, "name")}-${var.environment}-${var.project}", "_", "-"), 0, 31), "/-$/", "")
   vpc_id = var.vpc_id
   ingress = [
     {
@@ -40,8 +40,8 @@ module "sg_vpc_link" {
   source = "../sg"
 
 
-  layer    = var.layer
-  stack_id = var.stack_id
+  project    = var.project
+  environment = var.environment
   // configuration sg
   name   = "vpc-${lookup(var.configuration_pagestatic_private, "name")}"
   vpc_id = var.vpc_id
@@ -80,8 +80,8 @@ resource "aws_vpc_endpoint" "vpc_endpoint" {
   private_dns_enabled = false # Permite que el DNS de S3 resuelva a IPs privadas en tu VPC
 
   tags = merge(var.tags, {
-    Name        = replace("vpc-endpoint-${lookup(var.configuration_pagestatic_private, "name")}-${var.layer}-${var.stack_id}", "_", "-")
-    Environment = var.stack_id
+    Name        = replace("vpc-endpoint-${lookup(var.configuration_pagestatic_private, "name")}-${var.project}-${var.environment}", "_", "-")
+    Environment = var.environment
     Source      = "Terraform"
     }
   )
@@ -131,7 +131,7 @@ resource "aws_s3_bucket_policy" "static_website_bucket_policy" {
 }
 
 resource "aws_lb" "website_alb" {
-  name               = replace("lb-${lookup(var.configuration_pagestatic_private, "name")}-${var.layer}-${var.stack_id}", "_", "-")
+  name               = replace("lb-${lookup(var.configuration_pagestatic_private, "name")}-${var.project}-${var.environment}", "_", "-")
   internal           = true
   load_balancer_type = "application"
   security_groups    = [module.sg_lb.sg_reference.id]
@@ -140,8 +140,8 @@ resource "aws_lb" "website_alb" {
   enable_deletion_protection = lookup(var.configuration_pagestatic_private, "enable_deletion_protection")
 
   tags = merge(var.tags, {
-    Name        = replace("lb-webstatic-${lookup(var.configuration_pagestatic_private, "name")}-${var.layer}-${var.stack_id}", "_", "-")
-    Environment = var.stack_id
+    Name        = replace("lb-webstatic-${lookup(var.configuration_pagestatic_private, "name")}-${var.project}-${var.environment}", "_", "-")
+    Environment = var.environment
     Source      = "Terraform"
     }
   )
@@ -229,7 +229,7 @@ resource "aws_lb_listener" "http_listener" {
 }
 
 resource "aws_lb_target_group" "s3_target_group" {
-  name        = replace("tg-${lookup(var.configuration_pagestatic_private, "name")}-${var.layer}-${var.stack_id}", "_", "-")
+  name        = replace("tg-${lookup(var.configuration_pagestatic_private, "name")}-${var.project}-${var.environment}", "_", "-")
   port        = 80
   protocol    = "HTTP"
   vpc_id      = var.vpc_id
@@ -247,8 +247,8 @@ resource "aws_lb_target_group" "s3_target_group" {
   }
 
   tags = merge(var.tags, {
-    Name        = replace("tg-${lookup(var.configuration_pagestatic_private, "name")}-${var.layer}-${var.stack_id}", "_", "-")
-    Environment = var.stack_id
+    Name        = replace("tg-${lookup(var.configuration_pagestatic_private, "name")}-${var.project}-${var.environment}", "_", "-")
+    Environment = var.environment
     Source      = "Terraform"
     }
   )

@@ -1,7 +1,7 @@
 resource "aws_security_group" "sg_db" {
-  name        = "rds-sg-${lookup(var.configuration_rds, "rds_name")}-${var.layer}-${var.stack_id}"
+  name        = "rds-sg-${lookup(var.configuration_rds, "rds_name")}-${var.project}-${var.environment}"
   vpc_id      = var.vpc
-  description = "Enable access to the RDS DB ${lookup(var.configuration_rds, "rds_name")} ${var.layer} ${var.stack_id}"
+  description = "Enable access to the RDS DB ${lookup(var.configuration_rds, "rds_name")} ${var.project} ${var.environment}"
 
   dynamic "ingress" {
 
@@ -28,28 +28,28 @@ resource "aws_security_group" "sg_db" {
   }
 
   tags = {
-    Name        = "rds-sg-${lookup(var.configuration_rds, "rds_name")}-${var.layer}-${var.stack_id}"
-    Environment = var.stack_id
+    Name        = "rds-sg-${lookup(var.configuration_rds, "rds_name")}-${var.project}-${var.environment}"
+    Environment = var.environment
     Source      = "Terraform"
   }
 }
 
 resource "aws_db_subnet_group" "default_subnet_rds" {
-  name        = "subnet-rds-${lookup(var.configuration_rds, "rds_name")}-${var.layer}-${var.stack_id}"
-  description = replace("subnet-rds-${lookup(var.configuration_rds, "rds_name")}-${var.layer}-${var.stack_id}", "/[-_]/", " ")
+  name        = "subnet-rds-${lookup(var.configuration_rds, "rds_name")}-${var.project}-${var.environment}"
+  description = replace("subnet-rds-${lookup(var.configuration_rds, "rds_name")}-${var.project}-${var.environment}", "/[-_]/", " ")
   subnet_ids  = var.db_subnets_private
 
   tags = {
-    Name        = "DB-SG-${lookup(var.configuration_rds, "rds_name")}_${var.layer}_${var.stack_id}"
-    Environment = var.stack_id
+    Name        = "DB-SG-${lookup(var.configuration_rds, "rds_name")}_${var.project}_${var.environment}"
+    Environment = var.environment
     Source      = "Terraform"
   }
 }
 
 resource "aws_rds_cluster_parameter_group" "rds_cluster_parameter_group" {
-  name        = replace("parameter-group-${lookup(var.configuration_rds, "rds_name")}-${var.layer}-${var.stack_id}", "_", "-")
+  name        = replace("parameter-group-${lookup(var.configuration_rds, "rds_name")}-${var.project}-${var.environment}", "_", "-")
   family      = lookup(var.configuration_rds, "family", "aurora-mysql8.0")
-  description = "Cluster parameter group ${lookup(var.configuration_rds, "rds_name")} ${var.layer} ${var.stack_id}"
+  description = "Cluster parameter group ${lookup(var.configuration_rds, "rds_name")} ${var.project} ${var.environment}"
 
   dynamic "parameter" {
     for_each = length(coalesce(lookup(var.configuration_rds, "parameters", []), [])) == 0 ? [] : lookup(var.configuration_rds, "parameters")
@@ -69,7 +69,7 @@ resource "random_password" "password" {
 }
 
 resource "aws_rds_cluster" "rds_cluster" {
-  cluster_identifier              = replace("${lookup(var.configuration_rds, "rds_name")}-${var.layer}-${var.stack_id}", "_", "-")
+  cluster_identifier              = replace("${lookup(var.configuration_rds, "rds_name")}-${var.project}-${var.environment}", "_", "-")
   availability_zones              = lookup(var.configuration_rds, "availability_zones", null)
   engine                          = lookup(var.configuration_rds, "engine", "aurora-mysql")
   engine_mode                     = lookup(var.configuration_rds, "engine_mode", null)
@@ -109,14 +109,14 @@ resource "aws_rds_cluster" "rds_cluster" {
   }
 
   tags = merge(var.tags, {
-    Name        = replace("${lookup(var.configuration_rds, "rds_name")}-${var.layer}-${var.stack_id}", "_", "-")
-    Environment = var.stack_id
+    Name        = replace("${lookup(var.configuration_rds, "rds_name")}-${var.project}-${var.environment}", "_", "-")
+    Environment = var.environment
     Source      = "Terraform"
   })
 }
 
 resource "aws_rds_cluster_instance" "rds_cluster_instance" {
-  identifier          = replace("${lookup(var.configuration_rds, "rds_name")}-${var.layer}-${var.stack_id}-instance", "_", "-")
+  identifier          = replace("${lookup(var.configuration_rds, "rds_name")}-${var.project}-${var.environment}-instance", "_", "-")
   cluster_identifier  = aws_rds_cluster.rds_cluster.id
   instance_class      = lookup(var.configuration_rds, "instance_class", "db.serverless")
   publicly_accessible = lookup(var.configuration_rds, "publicly_accessible", null)
@@ -131,8 +131,8 @@ resource "aws_rds_cluster_instance" "rds_cluster_instance" {
   monitoring_role_arn                   = lookup(var.configuration_rds, "monitoring_interval", 0) > 0 ? aws_iam_role.iam_role.arn : null
 
   tags = merge(var.tags, {
-    Name        = replace("${lookup(var.configuration_rds, "rds_name")}-${var.layer}-${var.stack_id}-instance", "_", "-")
-    Environment = var.stack_id
+    Name        = replace("${lookup(var.configuration_rds, "rds_name")}-${var.project}-${var.environment}-instance", "_", "-")
+    Environment = var.environment
     Source      = "Terraform"
   })
 }
@@ -141,7 +141,7 @@ resource "aws_rds_cluster_instance" "rds_cluster_instance_reader" {
 
   count = length(lookup(var.configuration_rds, "multi_az", [])) != 0 ? length(lookup(var.configuration_rds, "multi_az")) : 0
 
-  identifier          = replace("${lookup(var.configuration_rds, "rds_name")}-${var.layer}-${var.stack_id}-instance-${count.index + 1}", "_", "-")
+  identifier          = replace("${lookup(var.configuration_rds, "rds_name")}-${var.project}-${var.environment}-instance-${count.index + 1}", "_", "-")
   cluster_identifier  = aws_rds_cluster.rds_cluster.id
   instance_class      = lookup(var.configuration_rds.multi_az[count.index], "instance_class", "db.serverless")
   publicly_accessible = lookup(var.configuration_rds.multi_az[count.index], "publicly_accessible", null)
@@ -156,8 +156,8 @@ resource "aws_rds_cluster_instance" "rds_cluster_instance_reader" {
   monitoring_role_arn                   = lookup(var.configuration_rds.multi_az[count.index], "monitoring_interval", 0) > 0 ? aws_iam_role.iam_role.arn : null
 
   tags = merge(var.tags, {
-    Name        = replace("${lookup(var.configuration_rds, "rds_name")}-${var.layer}-${var.stack_id}-instance-${count.index + 1}", "_", "-")
-    Environment = var.stack_id
+    Name        = replace("${lookup(var.configuration_rds, "rds_name")}-${var.project}-${var.environment}-instance-${count.index + 1}", "_", "-")
+    Environment = var.environment
     Source      = "Terraform"
   })
 }
@@ -181,7 +181,7 @@ data "aws_iam_policy_document" "iam_policy_document" {
 }
 
 resource "aws_iam_role" "iam_role" {
-  name_prefix        = replace(substr(replace("role-${lookup(var.configuration_rds, "rds_name")}-${var.layer}-${var.stack_id}", "_", "-"), 0, 38), "/-$/", "")
+  name_prefix        = replace(substr(replace("role-${lookup(var.configuration_rds, "rds_name")}-${var.project}-${var.environment}", "_", "-"), 0, 38), "/-$/", "")
   assume_role_policy = data.aws_iam_policy_document.iam_policy_document.json
 }
 
@@ -193,67 +193,67 @@ resource "aws_iam_role_policy_attachment" "iam_role_policy_attachment" {
 resource "aws_ssm_parameter" "secret_password" {
   count = lookup(var.configuration_rds, "manage_master_user_password", true) == true ? 1 : 0
 
-  name  = "/${var.stack_id}/${lookup(var.configuration_rds, "rds_name")}/DB_PASSWORD"
+  name  = "/${var.environment}/${lookup(var.configuration_rds, "rds_name")}/DB_PASSWORD"
   type  = "SecureString"
   value = random_password.password.result
 
   tags = {
-    Environment = var.stack_id
+    Environment = var.environment
     Source      = "Terraform"
   }
 }
 
 resource "aws_ssm_parameter" "secret_user" {
-  name  = "/${var.stack_id}/${lookup(var.configuration_rds, "rds_name")}/DB_USERNAME"
+  name  = "/${var.environment}/${lookup(var.configuration_rds, "rds_name")}/DB_USERNAME"
   type  = "SecureString"
   value = lookup(var.configuration_rds, "master_username")
 
   tags = {
-    Environment = var.stack_id
+    Environment = var.environment
     Source      = "Terraform"
   }
 }
 
 resource "aws_ssm_parameter" "secret_database" {
-  name  = "/${var.stack_id}/${lookup(var.configuration_rds, "rds_name")}/DB_DATABASE"
+  name  = "/${var.environment}/${lookup(var.configuration_rds, "rds_name")}/DB_DATABASE"
   type  = "SecureString"
   value = lookup(var.configuration_rds, "database_name")
 
   tags = {
-    Environment = var.stack_id
+    Environment = var.environment
     Source      = "Terraform"
   }
 }
 
 resource "aws_ssm_parameter" "secret_port" {
-  name  = "/${var.stack_id}/${lookup(var.configuration_rds, "rds_name")}/DB_PORT"
+  name  = "/${var.environment}/${lookup(var.configuration_rds, "rds_name")}/DB_PORT"
   type  = "SecureString"
   value = aws_rds_cluster.rds_cluster.port
 
   tags = {
-    Environment = var.stack_id
+    Environment = var.environment
     Source      = "Terraform"
   }
 }
 
 resource "aws_ssm_parameter" "secret_host" {
-  name  = "/${var.stack_id}/${lookup(var.configuration_rds, "rds_name")}/DB_HOST"
+  name  = "/${var.environment}/${lookup(var.configuration_rds, "rds_name")}/DB_HOST"
   type  = "SecureString"
   value = aws_rds_cluster.rds_cluster.endpoint
 
   tags = {
-    Environment = var.stack_id
+    Environment = var.environment
     Source      = "Terraform"
   }
 }
 
 resource "aws_ssm_parameter" "secret_host_reader" {
-  name  = "/${var.stack_id}/${lookup(var.configuration_rds, "rds_name")}/DB_HOST_READER"
+  name  = "/${var.environment}/${lookup(var.configuration_rds, "rds_name")}/DB_HOST_READER"
   type  = "SecureString"
   value = aws_rds_cluster.rds_cluster.reader_endpoint
 
   tags = {
-    Environment = var.stack_id
+    Environment = var.environment
     Source      = "Terraform"
   }
 }

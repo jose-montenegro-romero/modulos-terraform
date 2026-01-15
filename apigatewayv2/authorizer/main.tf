@@ -8,7 +8,7 @@ resource "aws_lambda_permission" "apigateway_permission" {
 }
 
 resource "aws_apigatewayv2_authorizer" "apigatewayv2_authorizer" {
-  name                              = replace("auth-${var.configuration_authorizer.name}-${var.layer}-${var.stack_id}", "_", "-")
+  name                              = replace("auth-${var.configuration_authorizer.name}-${var.project}-${var.environment}", "_", "-")
   api_id                            = var.api_id
   authorizer_type                   = "REQUEST"
   authorizer_uri                    = var.lambda_invoke_arn

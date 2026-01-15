@@ -19,7 +19,7 @@ data "aws_iam_policy_document" "iam_policy_document" {
 }
 
 resource "aws_iam_role" "iam_role" {
-  name               = "lambda-execution-role-${var.configuration_lambda.name}-${var.layer}-${var.stack_id}"
+  name               = "lambda-execution-role-${var.configuration_lambda.name}-${var.project}-${var.environment}"
   assume_role_policy = data.aws_iam_policy_document.iam_policy_document.json
 }
 
@@ -38,7 +38,7 @@ data "archive_file" "archive_file" {
 # Lambda function
 resource "aws_lambda_function" "lambda_function" {
   filename         = data.archive_file.archive_file.output_path
-  function_name    = "lambda-${var.configuration_lambda.name}-${var.layer}-${var.stack_id}"
+  function_name    = "lambda-${var.configuration_lambda.name}-${var.project}-${var.environment}"
   role             = aws_iam_role.iam_role.arn
   handler          = var.configuration_lambda.handler
   source_code_hash = data.archive_file.archive_file.output_base64sha256
@@ -60,8 +60,8 @@ resource "aws_lambda_function" "lambda_function" {
   }
 
   tags = merge(var.tags, {
-    Name        = "lambda-${var.configuration_lambda.name}-${var.layer}-${var.stack_id}"
-    Environment = var.stack_id
+    Name        = "lambda-${var.configuration_lambda.name}-${var.project}-${var.environment}"
+    Environment = var.environment
     Source      = "Terraform"
   })
 }

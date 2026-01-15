@@ -4,9 +4,9 @@ resource "aws_acm_certificate" "acm_certificate_imported" {
   certificate_chain = lookup(var.configuration_acm, "certificate_chain") != null ? file(lookup(var.configuration_acm, "certificate_chain")) : null
 
   tags = merge(var.tags, {
-    Name        = "acm-${var.layer}-${var.stack_id}"
+    Name        = "acm-${var.project}-${var.environment}"
     Domain      = lookup(var.configuration_acm, "domain")
-    Environment = var.stack_id
+    Environment = var.environment
     Source      = "Terraform"
   })
 }

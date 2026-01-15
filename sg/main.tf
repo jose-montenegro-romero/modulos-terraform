@@ -1,7 +1,7 @@
 #Create Security group
 resource "aws_security_group" "security_group" {
-  name        = "security-group-${var.name}-${var.layer}-${var.stack_id}"
-  description = replace("security group ${var.name} ${var.layer} ${var.stack_id}", "/[-_]/", " ")
+  name        = "security-group-${var.name}-${var.project}-${var.environment}"
+  description = replace("security group ${var.name} ${var.project} ${var.environment}", "/[-_]/", " ")
   vpc_id      = var.vpc_id
 
   dynamic "ingress" {
@@ -31,8 +31,8 @@ resource "aws_security_group" "security_group" {
   }
 
   tags = merge(var.tags, {
-    Name        = "security-group-${var.name}-${var.layer}-${var.stack_id}"
-    Environment = var.stack_id
+    Name        = "security-group-${var.name}-${var.project}-${var.environment}"
+    Environment = var.environment
     Source      = "Terraform"
   })
 }

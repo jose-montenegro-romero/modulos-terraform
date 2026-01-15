@@ -54,8 +54,8 @@ resource "aws_db_instance" "rds" {
   deletion_protection          = var.deletion_protection
 
   tags = merge(var.tags, {
-    Name        = "${var.db_name}-${var.layer}-${var.stack_id}"
-    Environment = var.stack_id
+    Name        = "${var.db_name}-${var.project}-${var.environment}"
+    Environment = var.environment
     Source      = "Terraform"
   })
 

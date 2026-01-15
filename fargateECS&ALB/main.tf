@@ -1,7 +1,7 @@
 
 # ALB Security Group: Edit to restrict access to the application
 resource "aws_security_group" "lb_fargate" {
-  name        = "load_balancer_security_group_${var.layer}_${var.stack_id}"
+  name        = "load_balancer_security_group_${var.project}_${var.environment}"
   description = "controls access to the ALB"
   vpc_id      = var.vpc
 
@@ -27,14 +27,14 @@ resource "aws_security_group" "lb_fargate" {
   }
 
   tags = {
-    Name   = "lb_fargate_${var.layer}_${var.stack_id}"
+    Name   = "lb_fargate_${var.project}_${var.environment}"
     Source = "Terraform"
   }
 }
 
 # Traffic to the ECS cluster should only come from the ALB
 resource "aws_security_group" "ecs_tasks_fargate" {
-  name        = "ecs_tasks_security_group_${var.layer}_${var.stack_id}"
+  name        = "ecs_tasks_security_group_${var.project}_${var.environment}"
   description = "allow inbound access from the ALB only"
   vpc_id      = var.vpc
 
@@ -53,7 +53,7 @@ resource "aws_security_group" "ecs_tasks_fargate" {
   }
 
   tags = {
-    Name   = "ecs_task_fargate_${var.layer}_${var.stack_id}"
+    Name   = "ecs_task_fargate_${var.project}_${var.environment}"
     Source = "Terraform"
   }
 }
@@ -75,7 +75,7 @@ data "aws_iam_policy_document" "ecs_task_execution_role" {
 
 # ECS task execution role
 resource "aws_iam_role" "ecs_task_execution_role" {
-  name               = "myEcsTaskExecutionRole_${var.layer}_${var.stack_id}"
+  name               = "myEcsTaskExecutionRole_${var.project}_${var.environment}"
   assume_role_policy = data.aws_iam_policy_document.ecs_task_execution_role.json
 }
 
@@ -93,25 +93,25 @@ resource "aws_iam_role_policy_attachment" "ecs_ssm" {
 #Create ECR repository
 resource "aws_ecr_repository" "ecr" {
   count                = length(var.ecs_fargate)
-  name                 = "ecr_${lookup(element(var.ecs_fargate, count.index), "ecr_repository")}_${var.layer}_${var.stack_id}"
+  name                 = "ecr_${lookup(element(var.ecs_fargate, count.index), "ecr_repository")}_${var.project}_${var.environment}"
   image_tag_mutability = "MUTABLE"
 
   tags = {
-    Name   = "ecr_${lookup(element(var.ecs_fargate, count.index), "ecr_repository")}_${var.layer}_${var.stack_id}"
+    Name   = "ecr_${lookup(element(var.ecs_fargate, count.index), "ecr_repository")}_${var.project}_${var.environment}"
     Source = "Terraform"
   }
 }
 
 # Create ALB
 resource "aws_lb" "main" {
-  name            = replace("alb_${var.layer}_${var.stack_id}", "_", "-")
+  name            = replace("alb_${var.project}_${var.environment}", "_", "-")
   subnets         = var.db_subnets_public
   security_groups = [aws_security_group.lb_fargate.id]
 }
 
 resource "aws_lb_target_group" "app" {
   count       = length(var.ecs_fargate)
-  name        = substr(replace("tg-${lookup(element(var.ecs_fargate, count.index), "ecr_repository")}-${var.stack_id}${var.layer}", "_", "-"), 0, 31)
+  name        = substr(replace("tg-${lookup(element(var.ecs_fargate, count.index), "ecr_repository")}-${var.environment}${var.project}", "_", "-"), 0, 31)
   port        = 80
   protocol    = "HTTP"
   vpc_id      = var.vpc
@@ -227,12 +227,12 @@ resource "aws_lb_listener_rule" "static" {
 
 # Create ECS cluster
 resource "aws_ecs_cluster" "main" {
-  name = "cluster_${var.layer}_${var.stack_id}"
+  name = "cluster_${var.project}_${var.environment}"
 }
 
 resource "aws_ecs_task_definition" "app" {
   count                    = length(var.ecs_fargate)
-  family                   = "task_${lookup(element(var.ecs_fargate, count.index), "ecr_repository")}_${var.stack_id}"
+  family                   = "task_${lookup(element(var.ecs_fargate, count.index), "ecr_repository")}_${var.environment}"
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
   task_role_arn            = aws_iam_role.ecs_task_execution_role.arn
   network_mode             = "awsvpc"
@@ -242,9 +242,9 @@ resource "aws_ecs_task_definition" "app" {
 
   container_definitions = templatefile(lookup(element(var.ecs_fargate, count.index), "templatefile"), merge(var.extra_environments,
     {
-      stack_id       = var.stack_id
+      environment       = var.environment
       region         = var.region
-      layer          = lookup(element(var.ecs_fargate, count.index), "ecr_repository")
+      project          = lookup(element(var.ecs_fargate, count.index), "ecr_repository")
       app_image      = "${element(aws_ecr_repository.ecr.*.repository_url, count.index)}:latest"
       fargate_cpu    = lookup(element(var.ecs_fargate, count.index), "cpu")
       fargate_memory = lookup(element(var.ecs_fargate, count.index), "memory")
@@ -276,7 +276,7 @@ resource "aws_ecs_task_definition" "app" {
 
 resource "aws_ecs_service" "main" {
   count           = length(var.ecs_fargate)
-  name            = "service_${lookup(element(var.ecs_fargate, count.index), "ecr_repository")}_${var.stack_id}"
+  name            = "service_${lookup(element(var.ecs_fargate, count.index), "ecr_repository")}_${var.environment}"
   cluster         = aws_ecs_cluster.main.id
   task_definition = element(aws_ecs_task_definition.app.*.arn, count.index)
   desired_count   = 1
@@ -290,7 +290,7 @@ resource "aws_ecs_service" "main" {
 
   load_balancer {
     target_group_arn = element(aws_alb_target_group.app.*.id, count.index)
-    container_name   = "container_${lookup(element(var.ecs_fargate, count.index), "ecr_repository")}_${var.stack_id}"
+    container_name   = "container_${lookup(element(var.ecs_fargate, count.index), "ecr_repository")}_${var.environment}"
     container_port   = lookup(element(var.ecs_fargate, count.index), "port")
   }
 
@@ -310,7 +310,7 @@ resource "aws_appautoscaling_target" "target" {
 # Automatically scale capacity up by one CPU
 resource "aws_appautoscaling_policy" "up_cpu" {
   count              = length(var.ecs_fargate)
-  name               = "scale_up_cpu_${lookup(element(var.ecs_fargate, count.index), "ecr_repository")}_${var.layer}_${var.stack_id}"
+  name               = "scale_up_cpu_${lookup(element(var.ecs_fargate, count.index), "ecr_repository")}_${var.project}_${var.environment}"
   service_namespace  = "ecs"
   resource_id        = "service/${aws_ecs_cluster.main.name}/${element(aws_ecs_service.main.*.name, count.index)}"
   scalable_dimension = "ecs:service:DesiredCount"
@@ -332,7 +332,7 @@ resource "aws_appautoscaling_policy" "up_cpu" {
 # Automatically scale capacity down by one CPU
 resource "aws_appautoscaling_policy" "down_cpu" {
   count              = length(var.ecs_fargate)
-  name               = "scale_down_cpu_${lookup(element(var.ecs_fargate, count.index), "ecr_repository")}_${var.layer}_${var.stack_id}"
+  name               = "scale_down_cpu_${lookup(element(var.ecs_fargate, count.index), "ecr_repository")}_${var.project}_${var.environment}"
   service_namespace  = "ecs"
   resource_id        = "service/${aws_ecs_cluster.main.name}/${element(aws_ecs_service.main.*.name, count.index)}"
   scalable_dimension = "ecs:service:DesiredCount"
@@ -352,7 +352,7 @@ resource "aws_appautoscaling_policy" "down_cpu" {
 # Automatically scale capacity up by one Memory
 resource "aws_appautoscaling_policy" "up_memory" {
   count              = length(var.ecs_fargate)
-  name               = "scale_up_memory_${lookup(element(var.ecs_fargate, count.index), "ecr_repository")}_${var.layer}_${var.stack_id}"
+  name               = "scale_up_memory_${lookup(element(var.ecs_fargate, count.index), "ecr_repository")}_${var.project}_${var.environment}"
   service_namespace  = "ecs"
   resource_id        = "service/${aws_ecs_cluster.main.name}/${element(aws_ecs_service.main.*.name, count.index)}"
   scalable_dimension = "ecs:service:DesiredCount"
@@ -372,7 +372,7 @@ resource "aws_appautoscaling_policy" "up_memory" {
 # Automatically scale capacity down by one Memory
 resource "aws_appautoscaling_policy" "down_memory" {
   count              = length(var.ecs_fargate)
-  name               = "scale_down_memory_${lookup(element(var.ecs_fargate, count.index), "ecr_repository")}_${var.layer}_${var.stack_id}"
+  name               = "scale_down_memory_${lookup(element(var.ecs_fargate, count.index), "ecr_repository")}_${var.project}_${var.environment}"
   service_namespace  = "ecs"
   resource_id        = "service/${aws_ecs_cluster.main.name}/${element(aws_ecs_service.main.*.name, count.index)}"
   scalable_dimension = "ecs:service:DesiredCount"
@@ -392,7 +392,7 @@ resource "aws_appautoscaling_policy" "down_memory" {
 #CloudWatch alarm that triggers the autoscaling up policy CPU
 resource "aws_cloudwatch_metric_alarm" "service_cpu_high" {
   count               = length(var.ecs_fargate)
-  alarm_name          = "cpu_utilization_high_${lookup(element(var.ecs_fargate, count.index), "ecr_repository")}_${var.layer}_${var.stack_id}"
+  alarm_name          = "cpu_utilization_high_${lookup(element(var.ecs_fargate, count.index), "ecr_repository")}_${var.project}_${var.environment}"
   comparison_operator = "GreaterThanOrEqualToThreshold"
   evaluation_periods  = "1"
   metric_name         = "CPUUtilization"
@@ -412,7 +412,7 @@ resource "aws_cloudwatch_metric_alarm" "service_cpu_high" {
 # CloudWatch alarm that triggers the autoscaling down policy CPU
 resource "aws_cloudwatch_metric_alarm" "service_cpu_low" {
   count               = length(var.ecs_fargate)
-  alarm_name          = "cpu_utilization_low_${lookup(element(var.ecs_fargate, count.index), "ecr_repository")}_${var.layer}_${var.stack_id}"
+  alarm_name          = "cpu_utilization_low_${lookup(element(var.ecs_fargate, count.index), "ecr_repository")}_${var.project}_${var.environment}"
   comparison_operator = "LessThanOrEqualToThreshold"
   evaluation_periods  = "1"
   metric_name         = "CPUUtilization"
@@ -432,7 +432,7 @@ resource "aws_cloudwatch_metric_alarm" "service_cpu_low" {
 # CloudWatch alarm that triggers the autoscaling up policy Memory
 resource "aws_cloudwatch_metric_alarm" "service_memory_high" {
   count               = length(var.ecs_fargate)
-  alarm_name          = "memory_utilization_high_${lookup(element(var.ecs_fargate, count.index), "ecr_repository")}_${var.layer}_${var.stack_id}"
+  alarm_name          = "memory_utilization_high_${lookup(element(var.ecs_fargate, count.index), "ecr_repository")}_${var.project}_${var.environment}"
   comparison_operator = "GreaterThanOrEqualToThreshold"
   evaluation_periods  = "1"
   metric_name         = "MemoryUtilization"
@@ -452,7 +452,7 @@ resource "aws_cloudwatch_metric_alarm" "service_memory_high" {
 # CloudWatch alarm that triggers the autoscaling down policy Memory
 resource "aws_cloudwatch_metric_alarm" "service_memory_low" {
   count               = length(var.ecs_fargate)
-  alarm_name          = "memory_utilization_low_${lookup(element(var.ecs_fargate, count.index), "ecr_repository")}_${var.layer}_${var.stack_id}"
+  alarm_name          = "memory_utilization_low_${lookup(element(var.ecs_fargate, count.index), "ecr_repository")}_${var.project}_${var.environment}"
   comparison_operator = "LessThanOrEqualToThreshold"
   evaluation_periods  = "1"
   metric_name         = "MemoryUtilization"
@@ -473,18 +473,18 @@ resource "aws_cloudwatch_metric_alarm" "service_memory_low" {
 # # Set up CloudWatch group and log stream and retain logs for 30 days
 resource "aws_cloudwatch_log_group" "myapp_log_group" {
   count             = length(var.ecs_fargate)
-  name              = "/ecs/container_${lookup(element(var.ecs_fargate, count.index), "ecr_repository")}_${var.stack_id}"
+  name              = "/ecs/container_${lookup(element(var.ecs_fargate, count.index), "ecr_repository")}_${var.environment}"
   retention_in_days = 7
 
   tags = {
-    Name   = "cloudwatch_log_${lookup(element(var.ecs_fargate, count.index), "ecr_repository")}_${var.stack_id}"
+    Name   = "cloudwatch_log_${lookup(element(var.ecs_fargate, count.index), "ecr_repository")}_${var.environment}"
     Source = "Terraform"
   }
 }
 
 resource "aws_cloudwatch_log_stream" "myapp_log_stream" {
   count          = length(var.ecs_fargate)
-  name           = "my_log_stream_${lookup(element(var.ecs_fargate, count.index), "ecr_repository")}_${var.stack_id}"
+  name           = "my_log_stream_${lookup(element(var.ecs_fargate, count.index), "ecr_repository")}_${var.environment}"
   log_group_name = element(aws_cloudwatch_log_group.myapp_log_group.*.name, count.index)
 }
 

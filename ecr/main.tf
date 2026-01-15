@@ -1,5 +1,5 @@
 resource "aws_ecr_repository" "ecr_repository" {
-  name                 = "ecr-${var.ecr_repository.name}-${var.layer}-${var.stack_id}"
+  name                 = "ecr-${var.ecr_repository.name}-${var.project}-${var.environment}"
   image_tag_mutability = var.ecr_repository.image_tag_mutability
   force_delete         = var.ecr_repository.force_delete
 
@@ -20,8 +20,8 @@ resource "aws_ecr_repository" "ecr_repository" {
   }
 
   tags = merge(var.tags, {
-    Name        = "ecr-${var.ecr_repository.name}-${var.layer}-${var.stack_id}"
-    Environment = var.stack_id
+    Name        = "ecr-${var.ecr_repository.name}-${var.project}-${var.environment}"
+    Environment = var.environment
     Source      = "Terraform"
   })
 }

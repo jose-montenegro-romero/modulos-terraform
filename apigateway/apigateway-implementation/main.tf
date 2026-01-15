@@ -49,7 +49,7 @@ resource "aws_api_gateway_deployment" "api_gateway_deployment" {
 resource "aws_api_gateway_stage" "api_gateway_stage" {
   rest_api_id   = var.api_gateway_rest_api_id
   deployment_id = aws_api_gateway_deployment.api_gateway_deployment.id
-  stage_name    = var.stack_id
+  stage_name    = var.environment
 
   access_log_settings {
     destination_arn = aws_cloudwatch_log_group.api_cloudwatch_log_group.arn

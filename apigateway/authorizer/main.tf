@@ -27,13 +27,13 @@ data "aws_iam_policy_document" "invocation_assume_role" {
 }
 
 resource "aws_iam_role" "invocation_role" {
-  name               = replace("auth-invocation-${var.configuration_authorizer.name}-${var.layer}-${var.stack_id}", "_", "-")
+  name               = replace("auth-invocation-${var.configuration_authorizer.name}-${var.project}-${var.environment}", "_", "-")
   path               = "/"
   assume_role_policy = data.aws_iam_policy_document.invocation_assume_role.json
 }
 
 resource "aws_api_gateway_authorizer" "api_gateway_authorizer" {
-  name            = replace("auth-${var.configuration_authorizer.name}-${var.layer}-${var.stack_id}", "_", "-")
+  name            = replace("auth-${var.configuration_authorizer.name}-${var.project}-${var.environment}", "_", "-")
   identity_source = "method.request.header.Authorization"
   rest_api_id     = var.api_id
   authorizer_uri  = var.lambda_invoke_arn

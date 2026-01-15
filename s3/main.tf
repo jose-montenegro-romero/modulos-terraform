@@ -1,11 +1,11 @@
 resource "aws_s3_bucket" "s3" {
-  bucket = var.custom_name != null ? var.custom_name : replace("${var.name}-${var.layer}-${var.stack_id}", "_", "-")
+  bucket = var.custom_name != null ? var.custom_name : replace("${var.name}-${var.project}-${var.environment}", "_", "-")
 
   force_destroy = var.force_destroy
 
   tags = merge(var.tags, {
-    Name        = "${var.name}-${var.layer}-${var.stack_id}"
-    Environment = var.stack_id
+    Name        = "${var.name}-${var.project}-${var.environment}"
+    Environment = var.environment
     source      = "Terraform"
   })
 }

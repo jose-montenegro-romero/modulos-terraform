@@ -8,8 +8,8 @@ resource "aws_apigatewayv2_domain_name" "apigatewayv2_domain_name" {
   }
 
   tags = merge(var.tags, {
-    Name        = "domain-name-${var.configuration_custom_domain.domain_name}-${var.layer}-${var.stack_id}"
-    Environment = var.stack_id
+    Name        = "domain-name-${var.configuration_custom_domain.domain_name}-${var.project}-${var.environment}"
+    Environment = var.environment
     Source      = "Terraform"
   })
 }
@@ -17,5 +17,5 @@ resource "aws_apigatewayv2_domain_name" "apigatewayv2_domain_name" {
 resource "aws_apigatewayv2_api_mapping" "apigatewayv2_api_mapping" {
   api_id      = var.api_id
   domain_name = aws_apigatewayv2_domain_name.apigatewayv2_domain_name.id
-  stage       = var.stack_id
+  stage       = var.environment
 }

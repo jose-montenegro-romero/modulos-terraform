@@ -1,9 +1,9 @@
-variable "stack_id" {
+variable "environment" {
   description = "Nombre del ambiente"
   type        = string
 }
 
-variable "layer" {
+variable "project" {
   description = "Nombre del proyecto"
   type        = string
 }

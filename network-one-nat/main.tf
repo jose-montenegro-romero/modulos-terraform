@@ -21,8 +21,8 @@ resource "aws_vpc" "vpc" {
   enable_dns_support   = true
   enable_dns_hostnames = true
   tags = merge(var.tags, {
-    Name        = "vpc-${var.layer}-${var.stack_id}"
-    Environment = var.stack_id
+    Name        = "vpc-${var.project}-${var.environment}"
+    Environment = var.environment
     Source      = "Terraform"
   })
 }
@@ -35,8 +35,8 @@ resource "aws_subnet" "public_subnets" {
   availability_zone       = data.aws_availability_zones.available.names[count.index]
   map_public_ip_on_launch = true
   tags = merge(var.tags, {
-    Name        = "subnet-public-${var.layer}-${var.stack_id}-${count.index + 1}"
-    Environment = var.stack_id
+    Name        = "subnet-public-${var.project}-${var.environment}-${count.index + 1}"
+    Environment = var.environment
     Source      = "Terraform"
   })
 }
@@ -50,8 +50,8 @@ resource "aws_subnet" "private_subnets" {
   availability_zone = data.aws_availability_zones.available.names[count.index]
 
   tags = merge(var.tags, {
-    Name        = "subnet-private-${var.layer}-${var.stack_id}-${count.index + 1}"
-    Environment = var.stack_id
+    Name        = "subnet-private-${var.project}-${var.environment}-${count.index + 1}"
+    Environment = var.environment
     Source      = "Terraform"
   })
 }
@@ -65,8 +65,8 @@ resource "aws_subnet" "private_subnets_db" {
   availability_zone = data.aws_availability_zones.available.names[count.index]
 
   tags = merge(var.tags, {
-    Name        = "subnet-private-db-${var.layer}-${var.stack_id}-${count.index + 1}"
-    Environment = var.stack_id
+    Name        = "subnet-private-db-${var.project}-${var.environment}-${count.index + 1}"
+    Environment = var.environment
     Source      = "Terraform"
   })
 }
@@ -75,8 +75,8 @@ resource "aws_subnet" "private_subnets_db" {
 resource "aws_internet_gateway" "IG" {
   vpc_id = aws_vpc.vpc.id
   tags = merge(var.tags, {
-    Name        = "IGW-${var.layer}-${var.stack_id}"
-    Environment = var.stack_id
+    Name        = "IGW-${var.project}-${var.environment}"
+    Environment = var.environment
     Source      = "Terraform"
   })
 }
@@ -86,8 +86,8 @@ resource "aws_eip" "elastic_ip" {
   domain = "vpc"
 
   tags = merge(var.tags, {
-    Name        = "eip-nat-${var.layer}-${var.stack_id}"
-    Environment = var.stack_id
+    Name        = "eip-nat-${var.project}-${var.environment}"
+    Environment = var.environment
     Source      = "Terraform"
   })
 }
@@ -98,8 +98,8 @@ resource "aws_nat_gateway" "nat_gw" {
   allocation_id = aws_eip.elastic_ip.id
 
   tags = merge(var.tags, {
-    Name        = "nat-gateway-${var.layer}-${var.stack_id}"
-    Environment = var.stack_id
+    Name        = "nat-gateway-${var.project}-${var.environment}"
+    Environment = var.environment
     Source      = "Terraform"
   })
 }
@@ -114,8 +114,8 @@ resource "aws_route_table" "public_routing_table" {
     gateway_id = aws_internet_gateway.IG.id
   }
   tags = merge(var.tags, {
-    Name        = "route-table-public-${var.layer}-${var.stack_id}"
-    Environment = var.stack_id
+    Name        = "route-table-public-${var.project}-${var.environment}"
+    Environment = var.environment
     Source      = "Terraform"
   })
 
@@ -142,8 +142,8 @@ resource "aws_route_table" "private_routing_table" {
   }
 
   tags = merge(var.tags, {
-    Name        = "route-table-private-${var.layer}-${var.stack_id}-${count.index + 1}"
-    Environment = var.stack_id
+    Name        = "route-table-private-${var.project}-${var.environment}-${count.index + 1}"
+    Environment = var.environment
     Source      = "Terraform"
   })
 }
@@ -178,8 +178,8 @@ resource "aws_ec2_transit_gateway_vpc_attachment" "ec2_transit_gateway_vpc_attac
   subnet_ids         = aws_subnet.private_subnets[*].id
 
   tags = merge(var.tags, {
-    Name        = "transit-gateway-vpc-ttachment-${var.layer}-${var.stack_id}"
-    Environment = var.stack_id
+    Name        = "transit-gateway-vpc-ttachment-${var.project}-${var.environment}"
+    Environment = var.environment
     Source      = "Terraform"
   })
 }

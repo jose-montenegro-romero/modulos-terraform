@@ -1,6 +1,6 @@
 resource "aws_apigatewayv2_api" "apigatewayv2_api" {
-  name        = replace("apigateway-${lookup(var.configuration_apigateway, "name")}-${var.layer}-${var.stack_id}", "_", "-")
-  description = replace("Api gateway ${lookup(var.configuration_apigateway, "name")} ${var.layer} ${var.stack_id}", "/[-_]/", " ")
+  name        = replace("apigateway-${lookup(var.configuration_apigateway, "name")}-${var.project}-${var.environment}", "_", "-")
+  description = replace("Api gateway ${lookup(var.configuration_apigateway, "name")} ${var.project} ${var.environment}", "/[-_]/", " ")
 
   protocol_type                = var.configuration_apigateway.protocol_type
   route_selection_expression   = var.configuration_apigateway.route_selection_expression
@@ -31,8 +31,8 @@ module "sg_lb" {
 
   count = var.configuration_apigateway.enable_vpc_link ? 1 : 0
 
-  layer    = var.layer
-  stack_id = var.stack_id
+  project    = var.project
+  environment = var.environment
   // configuration sg
   name    = var.configuration_apigateway.name
   vpc_id  = var.vpc_id
@@ -46,13 +46,13 @@ resource "aws_apigatewayv2_vpc_link" "apigatewayv2_vpc_link" {
 
   count = var.configuration_apigateway.enable_vpc_link ? 1 : 0
 
-  name               = replace("vpclink-v2-${var.configuration_apigateway.name}-${var.layer}-${var.stack_id}", "_", "-")
+  name               = replace("vpclink-v2-${var.configuration_apigateway.name}-${var.project}-${var.environment}", "_", "-")
   security_group_ids = [module.sg_lb[0].sg_reference.id]
   subnet_ids         = var.subnets
 
   tags = merge(var.tags, {
-    Name        = "vpclink-v2-${var.configuration_apigateway.name}-${var.layer}-${var.stack_id}"
-    Environment = var.stack_id
+    Name        = "vpclink-v2-${var.configuration_apigateway.name}-${var.project}-${var.environment}"
+    Environment = var.environment
     Source      = "Terraform"
   })
 }

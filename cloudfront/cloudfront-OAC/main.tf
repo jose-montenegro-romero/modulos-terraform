@@ -1,6 +1,6 @@
 resource "aws_cloudfront_origin_access_control" "cloudfront_origin_access_control" {
-  name                              = replace("${var.name}-${var.layer}-${var.stack_id}", "_", "-" )
-  description                       = "OAC ${var.name} ${var.layer} ${var.stack_id}"
+  name                              = replace("${var.name}-${var.project}-${var.environment}", "_", "-" )
+  description                       = "OAC ${var.name} ${var.project} ${var.environment}"
   origin_access_control_origin_type = var.origin_access_control_origin_type
   signing_behavior                  = var.signing_behavior
   signing_protocol                  = var.signing_protocol

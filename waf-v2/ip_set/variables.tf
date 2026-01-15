@@ -1,12 +1,12 @@
 
 variable "name" {}
 
-variable "layer" {
+variable "project" {
   description = "A unique identifier for the deployment"
   type        = string
 }
 
-variable "stack_id" {
+variable "environment" {
   description = "A unique identifier for the environment"
   type        = string
 }

@@ -3,8 +3,8 @@ module "sg_lb" {
   source = "../sg"
 
 
-  layer    = var.layer
-  stack_id = var.stack_id
+  project    = var.project
+  environment = var.environment
   // configuration sg
   name    = lookup(var.configuration_lb, "name")
   vpc_id  = var.vpc_id
@@ -15,7 +15,7 @@ module "sg_lb" {
 }
 
 resource "aws_lb" "lb" {
-  name                                                         = replace(substr(replace("lb-${lookup(var.configuration_lb, "name")}-${var.stack_id}-${var.layer}", "_", "-"), 0, 31), "/-$/", "")
+  name                                                         = replace(substr(replace("lb-${lookup(var.configuration_lb, "name")}-${var.environment}-${var.project}", "_", "-"), 0, 31), "/-$/", "")
   internal                                                     = lookup(var.configuration_lb, "internal", false)
   subnets                                                      = var.subnets
   security_groups                                              = [module.sg_lb.sg_reference.id]
@@ -25,8 +25,8 @@ resource "aws_lb" "lb" {
   enforce_security_group_inbound_rules_on_private_link_traffic = "on"
 
   tags = merge(var.tags, {
-    Name        = replace("lb-${lookup(var.configuration_lb, "name")}-${var.layer}-${var.stack_id}", "_", "-")
-    Environment = var.stack_id
+    Name        = replace("lb-${lookup(var.configuration_lb, "name")}-${var.project}-${var.environment}", "_", "-")
+    Environment = var.environment
     Source      = "Terraform"
     }
   )
